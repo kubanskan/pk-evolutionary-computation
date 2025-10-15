@@ -70,9 +70,64 @@ class BinaryChromosome:
         return new_chromosome
 
 
+class Population:
+    """
+    Klasa reprezentująca populację chromosomów.
+    Implementacja konfiguracji wielkości populacji.
+    """
+
+    def __init__(self,
+                 population_size: int,
+                 n_variables: int,
+                 bounds: List[Tuple[float, float]],
+                 precision: int = 6):
+        """
+        Inicjalizacja populacji.
+        Args:
+            population_size: Wielkość populacji (liczba chromosomów)
+            n_variables: Liczba zmiennych (wymiar problemu)
+            bounds: Granice dla każdej zmiennej
+            precision: Dokładność reprezentacji
+        """
+        self.population_size = population_size
+        self.n_variables = n_variables
+        self.bounds = bounds
+        self.precision = precision
+
+        self.chromosomes = [
+            BinaryChromosome(n_variables, bounds, precision)
+            for _ in range(population_size)
+        ]
+
+    def __len__(self) -> int:
+        """Zwraca wielkość populacji."""
+        return self.population_size
+
+    def __getitem__(self, index: int) -> BinaryChromosome:
+        """Dostęp do chromosomu: population[index]."""
+        return self.chromosomes[index]
+
+
 if __name__ == "__main__":
+
+    # Test Binary Chromosome
     bounds = [(-5.0, 5.0), (-10.0, 10.0)]
     chromosome = BinaryChromosome(n_variables=2, bounds=bounds, precision=4)
     print("Geny chromosomu:", chromosome.genes)
     decoded = chromosome.decode()
     print("Zdekodowane wartości:", decoded)
+
+    # Test Population
+    population = Population(
+        population_size=10,
+        n_variables=2,
+        bounds=[(-5, 5), (-5, 5)],
+        precision=3
+    )
+    print(f"Wielkość populacji: {len(population)}")
+    print(f"\nPierwsze 5 chromosomów:")
+
+    for i in range(5):
+        decoded = population[i].decode()
+        print(f"Chromosom {i}: x={decoded[0]:.4f}, y={decoded[1]:.4f}")
+        print("Geny:", population[i].genes)
