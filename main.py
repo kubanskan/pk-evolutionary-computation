@@ -404,29 +404,34 @@ class Crossover:
     @staticmethod
     def uniform(parent1: BinaryChromosome,
                 parent2: BinaryChromosome,
-                crossover_probability: float = 0.5) -> Tuple[BinaryChromosome, BinaryChromosome]:
+                crossover_probability: float = 0.8,
+                p: float = 0.5) -> Tuple[BinaryChromosome, BinaryChromosome]:
         """
         Krzyżowanie jednorodne (Uniform Crossover, UX)
 
         Dla każdego genu losowane jest prawdopodobieństwo α z przedziału [0,1].
-        Jeśli α < crossover_probability (domyślnie 0.5), bity rodziców są wymieniane między sobą.
+        Jeśli α < p (domyślnie 0.5), bity rodziców są wymieniane między sobą.
+        Dodatkowo, całe krzyżowanie odbywa się z określonym prawdopodobieństwem
+        `crossover_probability` (np. 0.8).
 
         Parametry konfiguracyjne:
-        - crossover_probability: prawdopodobieństwo wymiany genu (domyślnie 0.5)
+        - crossover_probability: prawdopodobieństwo wykonania całego krzyżowania (0–1)
+        - p: prawdopodobieństwo wymiany pojedynczego genu (0–1)
 
         Args:
             parent1: Pierwszy rodzic (BinaryChromosome)
             parent2: Drugi rodzic (BinaryChromosome)
-            crossover_probability: Prawdopodobieństwo wymiany genu (0–1)
-
-        Returns:
-            Krotka (child1, child2) – potomkowie po krzyżowaniu
+            crossover_probability: Prawdopodobieństwo wykonania krzyżowania
+            p: Prawdopodobieństwo wymiany genu między rodzicami
         """
+
+        if np.random.rand() > crossover_probability:
+            return parent1.copy(), parent2.copy()
 
         child1 = parent1.copy()
         child2 = parent2.copy()
 
-        mask = np.random.randint(0, 2, size=len(parent1.genes), dtype=bool)
+        mask = np.random.rand(len(parent1.genes)) < p
 
         child1_genes = np.where(mask, parent2.genes, parent1.genes)
         child2_genes = np.where(mask, parent1.genes, parent2.genes)
