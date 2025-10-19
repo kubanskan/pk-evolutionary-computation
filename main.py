@@ -314,7 +314,7 @@ class Crossover:
     - singlePoint: Krzyżowanie jednopunktowe
     - twoPoint: Krzyżowanie dwupunktowe
     - uniform: Krzyżowanie jednorodne
-    - granular: Krzyżowanie ziarniste
+    - discrete: Krzyżowanie ziarniste
     """
 
     @staticmethod
@@ -441,6 +441,44 @@ class Crossover:
 
         return child1, child2
 
+    @staticmethod
+    def discrete(parent1: BinaryChromosome,
+                 parent2: BinaryChromosome,
+                 crossover_probability: float = 0.8) -> Tuple[BinaryChromosome, BinaryChromosome]:
+        """
+        Krzyżowanie ziarniste (Discrete Crossover).
+
+        Dla każdego genu losowana jest liczba a z przedziału [0,1].
+        Jeśli a <= 0.5, gen w potomstwie pochodzi od rodzica 1, w przeciwnym wypadku od rodzica 2.
+
+        Parametry konfiguracyjne:
+        - crossover_probability: Prawdopodobieństwo wykonania krzyżowania (0-1)
+
+        Args:
+            parent1: Pierwszy rodzic (BinaryChromosome)
+            parent2: Drugi rodzic (BinaryChromosome)
+            crossover_probability: Prawdopodobieństwo krzyżowania
+
+        Returns:
+            Krotka (child1, child2) – potomkowie po krzyżowaniu
+        """
+
+        if np.random.rand() > crossover_probability:
+            return parent1.copy(), parent2.copy()
+
+        a = np.random.rand(len(parent1.genes))
+
+        print(a)
+        child1_genes = np.where(a <= 0.5, parent1.genes, parent2.genes)
+        child2_genes = np.where(a <= 0.5, parent2.genes, parent1.genes)
+
+        child1 = parent1.copy()
+        child2 = parent2.copy()
+        child1.genes = child1_genes
+        child2.genes = child2_genes
+
+        return child1, child2
+
 
 if __name__ == "__main__":
 
@@ -489,7 +527,7 @@ if __name__ == "__main__":
     print("Rodzic 2 geny: ", parent2.genes)
 
     # Krzyżowanie
-    child1, child2 = Crossover.uniform(parent1, parent2, crossover_probability=1.0)
+    child1, child2 = Crossover.discrete(parent1, parent2, crossover_probability=1.0)
 
     print("\nPotomek 1 geny:", child1.genes)
     print("Potomek 2 geny:", child2.genes)
