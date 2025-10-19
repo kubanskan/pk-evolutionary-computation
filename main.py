@@ -1,4 +1,3 @@
-
 from typing import List, Tuple, Callable
 import numpy as np
 
@@ -243,7 +242,6 @@ class Selection:
                 fitnesses = fitnesses - min_fitness + 1
             fitnesses = 1.0 / (fitnesses + 1e-10)
 
-
         total_fitness = np.sum(fitnesses)
         probabilities = fitnesses / total_fitness
 
@@ -288,7 +286,6 @@ class Selection:
 
         selected = []
 
-
         for _ in range(n_parents):
             tournament_indices = np.random.choice(
                 len(population.individuals),
@@ -305,6 +302,7 @@ class Selection:
             selected.append(winner)
 
         return selected
+
 
 class Crossover:
     """
@@ -351,7 +349,6 @@ class Crossover:
         child2 = parent2.copy()
         child1.genes = child1_genes
         child2.genes = child2_genes
-
 
         return child1, child2
 
@@ -529,6 +526,100 @@ class Crossover:
         return child1, child2
 
 
+class Mutation:
+    """
+    Klasa zawierająca metody mutacji dla algorytmu genetycznego.
+
+    Dostępne metody:
+    - boundary: Mutacja brzegowa
+    - one_point: Mutacja jednopunktowa
+    - two_point: Mutacja dwupunktowa
+
+    Parametr konfiguracyjny:
+    - mutation_probability: prawdopodobieństwo mutacji
+    """
+
+    @staticmethod
+    def boundary(chromosome: BinaryChromosome,
+                 mutation_probability: float = 0.01) -> BinaryChromosome:
+        """
+        Mutacja brzegowa
+
+        Zastępuje brzegowe geny z prawdopodobieństwem mutation_probability
+
+        Parametry konfiguracyjne:
+        - mutation_probability: Prawdopodobieństwo mutacji
+
+        Args:
+            chromosome: Chromosom do zmutowania
+            mutation_probability: Prawdopodobieństwo mutacji
+
+        Returns:
+            Zmutowany chromosom
+        """
+        mutated = chromosome.copy()
+
+        if np.random.rand() < mutation_probability:
+            point = np.random.randint(0, 2)
+            mutated.genes[-point] = 1 - mutated.genes[point]
+
+        return mutated
+
+    @staticmethod
+    def one_point(chromosome: BinaryChromosome,
+                  mutation_probability: float = 0.01) -> BinaryChromosome:
+        """
+        Mutacja jednopunktowa
+
+        Z prawdopodobieństwem mutation_probability wybiera JEDEN losowy bit
+        w chromosomie i odwraca jego wartość
+
+        Args:
+            chromosome: Chromosom do zmutowania
+            mutation_probability: Prawdopodobieństwo mutacji (domyślnie 0.01)
+
+        Returns:
+            Zmutowany chromosom
+        """
+        mutated = chromosome.copy()
+
+        if np.random.rand() < mutation_probability:
+            point = np.random.randint(0, len(mutated.genes))
+            mutated.genes[point] = 1 - mutated.genes[point]
+
+        return mutated
+
+    @staticmethod
+    def two_point(chromosome: BinaryChromosome,
+                  mutation_probability: float = 0.01) -> BinaryChromosome:
+        """
+        Mutacja dwupunktowa (two-point mutation).
+
+        Z prawdopodobieństwem mutation_probability wybiera DWA losowe bity
+        w chromosomie i odwraca ich wartości
+
+        Args:
+            chromosome: Chromosom do zmutowania
+            mutation_probability: Prawdopodobieństwo mutacji
+        Returns:
+            Zmutowany chromosom
+        """
+        mutated = chromosome.copy()
+
+        if np.random.rand() < mutation_probability:
+            length = len(mutated.genes)
+            if length < 2:
+                point = np.random.randint(0, length)
+                mutated.genes[point] = 1 - mutated.genes[point]
+            else:
+
+                points = np.random.choice(length, size=2, replace=False)
+                for point in points:
+                    mutated.genes[point] = 1 - mutated.genes[point]
+
+        return mutated
+
+
 if __name__ == "__main__":
 
     # Test Binary Chromosome
@@ -537,7 +628,6 @@ if __name__ == "__main__":
     print("Geny chromosomu:", chromosome.genes)
     decoded = chromosome.decode()
     print("Zdekodowane wartości:", decoded)
-
 
     # Test Individual
     print("\nTest Individual:")
@@ -597,3 +687,14 @@ if __name__ == "__main__":
 
     print("\nPotomek 1 geny:", child1.genes)
     print("Potomek 2 geny:", child2.genes)
+
+    # Mutacja
+    probabilities = [0.2, 0.5, 1.0]
+    print(f"Chromosom do testu Mutacji {child1.genes}")
+    for prob in probabilities:
+        print(f"Mutacja prawdopodobieństwo:{prob}%\n")
+        print("Jednopunktowa:", Mutation.one_point(child1, prob).genes, "\n")
+        print("Dwupunktowa:", Mutation.two_point(child1, prob).genes, "\n")
+        print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
+        print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
+        print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
