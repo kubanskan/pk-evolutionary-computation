@@ -659,6 +659,42 @@ class Inversion:
 
         return child
 
+class Elitism:
+    """
+    Klasa realizująca strategię elitarną w algorytmie genetycznym.
+
+    Strategia elitarna polega na zachowaniu najlepszych osobników
+    z bieżącej populacji i przeniesieniu ich do nowej populacji,
+    aby uniknąć utraty najlepszego rozwiązania.
+    """
+
+    @staticmethod
+    def elitism_strategy(population: Population,
+                         elitism_percentage: float = 0.1,
+                         optimization_type: str = 'minimize') -> List[Individual]:
+        """
+        Selekcja elitarnych osobników – wybiera najlepiej dopasowanych osobników
+        z populacji i zachowuje ich do następnej generacji.
+
+        Args:
+            population: Populacja do selekcji
+            elitism_percentage: Procent populacji do zachowania (0.0 - 1.0)
+            optimization_type: 'minimize' lub 'maximize'
+
+        Returns:
+            Lista elitarnych osobników
+        """
+        pop_size = len(population)
+        n_elites = max(1, int(pop_size * elitism_percentage))  # liczba elit
+
+        if optimization_type == 'minimize':
+            sorted_individuals = sorted(population.individuals, key=lambda ind: ind.fitness)
+        else:
+            sorted_individuals = sorted(population.individuals, key=lambda ind: ind.fitness, reverse=True)
+
+        elites = sorted_individuals[:n_elites]
+        return elites
+
 
 if __name__ == "__main__":
 
@@ -683,17 +719,45 @@ if __name__ == "__main__":
     # Test Population
     print("\nTest Population:")
     population = Population(
-        population_size=5,
+        population_size=10,
         n_variables=4,
         bounds=[(-5, 5), (-5, 5), (0, 1), (-2, 2)],
         precision=3
     )
     print(f"Wielkość populacji: {len(population)}")
 
-    print("\nPopulacja 4-wymiarowa:")
+    def fitness_function_min(x):
+        return np.sum(np.array(x) ** 2)  # minimalizacja
+
+    def fitness_function_max(x: np.ndarray) -> float:
+        return np.sum(x)
+
+    population.evaluate(fitness_function_min)
+
+    print("\nPopulacja 4-wymiarowa (minimalizacja):")
     for i, individual in enumerate(population.individuals):
         x, y, z, w = individual.get_phenotype()
-        print(f"Osobnik {i + 1}: x={x:.4f}, y={y:.4f}, z={z:.4f}, w={w:.4f}")
+        print(f"Osobnik {i + 1}: x={x:.4f}, y={y:.4f}, z={z:.4f}, w={w:.4f}, fitness={individual.fitness:.4f}")
+
+    elites_min = Elitism.elitism_strategy(population, elitism_percentage=0.1, optimization_type='minimize')
+
+    print("\n--- Elitarne osobniki (10% najlepszych, minimalizacja) ---")
+    for i, elite in enumerate(elites_min):
+        print(f"Elita {i + 1}: fenotyp={elite.get_phenotype()}, fitness={elite.fitness:.4f}")
+
+    # Maksymalizacja
+    population.evaluate(fitness_function_max)
+
+    print("\nPopulacja 4-wymiarowa (maksymalizacja):")
+    for i, individual in enumerate(population.individuals):
+        x, y, z, w = individual.get_phenotype()
+        print(f"Osobnik {i + 1}: x={x:.4f}, y={y:.4f}, z={z:.4f}, w={w:.4f}, fitness={individual.fitness:.4f}")
+
+    elites_max = Elitism.elitism_strategy(population, elitism_percentage=0.1, optimization_type='maximize')
+
+    print("\n--- Elitarne osobniki (10% najlepszych, maksymalizacja) ---")
+    for i, elite in enumerate(elites_max):
+        print(f"Elita {i + 1}: fenotyp={elite.get_phenotype()}, fitness={elite.fitness:.4f}")
 
     # Test Crossover
     print("\nTest krzyżowania ziarnistego:")
@@ -711,32 +775,15 @@ if __name__ == "__main__":
     print("\nPotomek 1 geny:", child1.genes)
     print("Potomek 2 geny:", child2.genes)
 
-
-    # Test Crossover
-    print("\nTest krzyżowania jednopunktowego:")
-
-    # Tworzymy dwóch rodziców
-    parent1 = BinaryChromosome(n_variables=2, bounds=[(-5, 5), (-5, 5)], precision=3)
-    parent2 = BinaryChromosome(n_variables=2, bounds=[(-5, 5), (-5, 5)], precision=3)
-
-    print("Rodzic 1 geny: ", parent1.genes)
-    print("Rodzic 2 geny: ", parent2.genes)
-
-    # Krzyżowanie
-    child1, child2 = Crossover.one_point(parent1, parent2, crossover_probability=1.0)
-
-    print("\nPotomek 1 geny:", child1.genes)
-    print("Potomek 2 geny:", child2.genes)
-
     # Mutacja
-    probabilities = [0.2, 0.5, 1.0]
+    probabilities = [0.2, 0.5]
     print(f"Chromosom do testu Mutacji {child1.genes}")
     for prob in probabilities:
         print(f"Mutacja prawdopodobieństwo:{prob}%\n")
         print("Jednopunktowa:", Mutation.one_point(child1, prob).genes, "\n")
         print("Dwupunktowa:", Mutation.two_point(child1, prob).genes, "\n")
-        print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
-        print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
+        print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n")
+        print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n")
         print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
 
     # Test inwersji na potomstwie
