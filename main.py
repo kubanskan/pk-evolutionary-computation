@@ -514,7 +514,6 @@ class Crossover:
 
         a = np.random.rand(len(parent1.genes))
 
-        print(a)
         child1_genes = np.where(a <= 0.5, parent1.genes, parent2.genes)
         child2_genes = np.where(a <= 0.5, parent2.genes, parent1.genes)
 
@@ -619,6 +618,47 @@ class Mutation:
 
         return mutated
 
+class Inversion:
+    """
+    Klasa implementująca operator inwersji (Inversion Mutation)
+    dla chromosomu binarnego w algorytmie genetycznym.
+
+    Inwersja polega na odwróceniu kolejności genów w losowo wybranym fragmencie chromosomu (pomiędzy dwoma punktami).
+    """
+
+    @staticmethod
+    def inverse(chromosome: 'BinaryChromosome',
+              inversion_probability: float = 0.1) -> 'BinaryChromosome':
+        """
+        Wykonuje mutację inwersji na podanym chromosomie.
+
+        Z prawdopodobieństwem mutation_probability wybiera losowy fragment
+        chromosomu i odwraca jego kolejność.
+
+        Parametry konfiguracyjne:
+        - mutation_probability: prawdopodobieństwo wykonania mutacji (0–1)
+
+        Args:
+            chromosome: Chromosom binarny do zmutowania
+            inversion_probability: Prawdopodobieństwo wykonania mutacji
+
+        Returns:
+            Nowy chromosom po ewentualnej inwersji
+        """
+
+        if np.random.rand() > inversion_probability:
+            return chromosome.copy()
+
+        child = chromosome.copy()
+        length = len(child.genes)
+
+        point1 = np.random.randint(0, length - 1)
+        point2 = np.random.randint(point1 + 1, length)
+
+        child.genes[point1:point2] = child.genes[point1:point2][::-1]
+
+        return child
+
 
 if __name__ == "__main__":
 
@@ -656,7 +696,7 @@ if __name__ == "__main__":
         print(f"Osobnik {i + 1}: x={x:.4f}, y={y:.4f}, z={z:.4f}, w={w:.4f}")
 
     # Test Crossover
-    print("\nTest krzyżowania jednopunktowego:")
+    print("\nTest krzyżowania ziarnistego:")
 
     # Tworzymy dwóch rodziców
     parent1 = BinaryChromosome(n_variables=2, bounds=[(-5, 5), (-5, 5)], precision=3)
@@ -698,3 +738,10 @@ if __name__ == "__main__":
         print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
         print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
         print("Brzegowa:", Mutation.boundary(child1, prob).genes, "\n\n")
+
+    # Test inwersji na potomstwie
+    print("\nTest inwersji na child1:")
+    print("Geny przed inwersją:", child1.genes)
+
+    inverted_child = Inversion.inverse(child1, inversion_probability=1.0)
+    print(f"Prawdopodobieństwo {prob}: {inverted_child.genes}")
