@@ -5,8 +5,6 @@ import numpy as np
 class Inversion:
     """
     Klasa implementująca operator inwersji (Inversion Mutation)
-    dla chromosomu binarnego w algorytmie genetycznym.
-
     Inwersja polega na odwróceniu kolejności genów w losowo wybranym fragmencie chromosomu (pomiędzy dwoma punktami).
     """
 
@@ -15,16 +13,8 @@ class Inversion:
                 inversion_probability: float = 0.1) -> BinaryChromosome:
         """
         Wykonuje mutację inwersji na podanym chromosomie.
-
         Z prawdopodobieństwem mutation_probability wybiera losowy fragment
         chromosomu i odwraca jego kolejność.
-
-        Parametry konfiguracyjne:
-        - mutation_probability: prawdopodobieństwo wykonania mutacji (0–1)
-
-        Args:
-            chromosome: Chromosom binarny do zmutowania
-            inversion_probability: Prawdopodobieństwo wykonania mutacji
 
         Returns:
             Nowy chromosom po ewentualnej inwersji

@@ -1,5 +1,5 @@
-from population import Population
-from chromosome import Individual
+from .population import Population
+from .chromosome import Individual
 from typing import List
 import numpy as np
 
@@ -24,18 +24,6 @@ class Selection:
 
         Wybiera określony procent najlepszych osobników z populacji.
         Im wyższy procent, tym więcej osobników zostanie wybranych.
-
-        Parametry konfiguracyjne:
-        - selection_percentage: procent najlepszych osobników (0.0-1.0)
-
-        Args:
-            population: Populacja do selekcji
-            n_parents: Maksymalna liczba rodziców
-            selection_percentage: Procent najlepszych (domyślnie 50%)
-            optimization_type: 'minimize' lub 'maximize'
-
-        Returns:
-            Lista wybranych osobników
         """
 
         n_selected = max(1, int(len(population.individuals) * selection_percentage))
@@ -66,15 +54,6 @@ class Selection:
         1. Każdy osobnik ma "wycinek" koła proporcjonalny do fitness
         2. Lepsze osobniki = większe wycinki = większa szansa
         3. Losujemy n_parents razy (kręcimy kołem)
-
-        Args:
-            population: Populacja do selekcji
-            n_parents: Liczba rodziców do wybrania
-            optimization_type: 'minimize' lub 'maximize'
-
-        Returns:
-            Lista wybranych osobników
-
         """
         fitnesses = np.array([ind.fitness for ind in population.individuals])
 
@@ -104,27 +83,15 @@ class Selection:
                    optimization_type: str = 'minimize') -> List[Individual]:
         """
         Selekcja turniejowa
-
         Tworzy n turniejów po k osobników w każdym.
         Z każdego turnieju wybieramy zwycięzcę (najlepszego).
-
         Parametry konfiguracyjne:
         - tournament_size (k): wielkość turnieju
-
         Przykład dla k=3:
         1. Losujemy 3 osobników do turnieju
         2. Porównujemy ich fitness
         3. Wybieramy najlepszego jako zwycięzcę
         4. Powtarzamy n_parents razy
-
-        Args:
-            population: Populacja do selekcji
-            n_parents: Liczba rodziców (liczba turniejów)
-            tournament_size: Rozmiar turnieju k (domyślnie 3)
-            optimization_type: 'minimize' lub 'maximize'
-
-        Returns:
-            Lista zwycięzców turniejów
         """
 
         selected = []

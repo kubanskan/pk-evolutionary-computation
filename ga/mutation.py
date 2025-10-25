@@ -20,18 +20,8 @@ class Mutation:
                  mutation_probability: float = 0.01) -> BinaryChromosome:
         """
         Mutacja brzegowa
-
         Zastępuje brzegowe geny z prawdopodobieństwem mutation_probability
 
-        Parametry konfiguracyjne:
-        - mutation_probability: Prawdopodobieństwo mutacji
-
-        Args:
-            chromosome: Chromosom do zmutowania
-            mutation_probability: Prawdopodobieństwo mutacji
-
-        Returns:
-            Zmutowany chromosom
         """
         mutated = chromosome.copy()
 
@@ -49,13 +39,6 @@ class Mutation:
 
         Z prawdopodobieństwem mutation_probability wybiera JEDEN losowy bit
         w chromosomie i odwraca jego wartość
-
-        Args:
-            chromosome: Chromosom do zmutowania
-            mutation_probability: Prawdopodobieństwo mutacji (domyślnie 0.01)
-
-        Returns:
-            Zmutowany chromosom
         """
         mutated = chromosome.copy()
 
@@ -72,13 +55,7 @@ class Mutation:
         Mutacja dwupunktowa (two-point mutation).
 
         Z prawdopodobieństwem mutation_probability wybiera DWA losowe bity
-        w chromosomie i odwraca ich wartości
-
-        Args:
-            chromosome: Chromosom do zmutowania
-            mutation_probability: Prawdopodobieństwo mutacji
-        Returns:
-            Zmutowany chromosom
+        w chromosomie i odwraca ich wartośc
         """
         mutated = chromosome.copy()
 

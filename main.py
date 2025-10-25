@@ -6,7 +6,8 @@ from ga.crossover import Crossover
 from ga.inversion import Inversion
 from ga.mutation import Mutation
 from benchmark_functions import Hypersphere
-
+import tkinter as tk
+from app.ui import GeneticAlgorithmGUI
 if __name__ == "__main__":
 
     # Test Binary Chromosome
@@ -127,3 +128,6 @@ if __name__ == "__main__":
     for i, elite in enumerate(elites_max):
         print(f"Elita {i + 1}: fenotyp={elite.get_phenotype()}, fitness={elite.fitness:.4f}")
 
+    root = tk.Tk()
+    app = GeneticAlgorithmGUI(root)
+    root.mainloop()

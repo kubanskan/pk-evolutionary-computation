@@ -12,12 +12,10 @@ class BinaryChromosome:
                  precision: int = 6):
         """
         Inicjalizacja chromosomu binarnego.
-
         Args:
             n_variables: Liczba zmiennych (wymiar problemu)
-            bounds: Lista krotek (dolna_granica, górna_granica) dla każdej zmiennej,
-                    granice są dopierane na podstawie standardów dla danej funkcji
-            precision: Dokładność (liczba miejsc po przecinku), wskazywana przez użytkownika
+            bounds: Lista krotek (dolna_granica, górna_granica)
+            precision: Dokładność (liczba miejsc po przecinku)
         """
         self.n_variables = n_variables
         self.bounds = bounds
@@ -32,13 +30,11 @@ class BinaryChromosome:
 
         self.total_length = sum(self.bits_per_variable)
 
-        # Inicjalizacja losowego chromosomu
         self.genes = np.random.randint(0, 2, self.total_length)
 
     def decode(self) -> np.ndarray:
         """
         Dekodowanie chromosomu binarnego na wartości rzeczywiste.
-
         Returns:
             Tablica wartości rzeczywistych
         """
@@ -78,9 +74,6 @@ class Individual:
     def __init__(self, chromosome: BinaryChromosome):
         """
         Inicjalizacja osobnika.
-
-        Args:
-            chromosome: Chromosom binarny
         """
         self.chromosome = chromosome
         self.fitness = None

@@ -104,8 +104,7 @@ class Crossover:
                 crossover_probability: float = 0.8,
                 p: float = 0.5) -> Tuple[BinaryChromosome, BinaryChromosome]:
         """
-        Krzyżowanie jednorodne (Uniform Crossover, UX)
-
+        Krzyżowanie jednorodne
         Dla każdego genu losowane jest prawdopodobieństwo α z przedziału [0,1].
         Jeśli α < p (domyślnie 0.5), bity rodziców są wymieniane między sobą.
         Dodatkowo, całe krzyżowanie odbywa się z określonym prawdopodobieństwem
@@ -143,11 +142,9 @@ class Crossover:
                  parent2: BinaryChromosome,
                  crossover_probability: float = 0.8) -> Tuple[BinaryChromosome, BinaryChromosome]:
         """
-        Krzyżowanie ziarniste (Discrete Crossover).
-
+        Krzyżowanie ziarniste
         Dla każdego genu losowana jest liczba a z przedziału [0,1].
         Jeśli a <= 0.5, gen w potomstwie pochodzi od rodzica 1, w przeciwnym wypadku od rodzica 2.
-
         Parametry konfiguracyjne:
         - crossover_probability: Prawdopodobieństwo wykonania krzyżowania (0-1)
 
@@ -157,7 +154,7 @@ class Crossover:
             crossover_probability: Prawdopodobieństwo krzyżowania
 
         Returns:
-            Krotka (child1, child2) – potomkowie po krzyżowaniu
+             (child1, child2) – potomkowie po krzyżowaniu
         """
 
         if np.random.rand() > crossover_probability:
