@@ -1,39 +1,97 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from .config import GAConfig
+from app.config import GAConfig
 from benchmark_functions import Hypersphere, Schwefel, Keane
+from opfunu.cec_based.cec2014 import F12014, F52014, F112014
 import numpy as np
 import json
 from ga.genecticalgorithm import GeneticAlgorithmConfig
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from .database import DataBase
+from app.database import DataBase
+from pathlib import Path
 
 hypersphere = Hypersphere()
 schwefel = Schwefel()
 keane = Keane()
 
 
+class DynamicCECFunction:
+    """Wrapper dla funkcji CEC z dynamiczną zmianą wymiaru"""
 
+    def __init__(self, cec_class, name, initial_ndim=10):
+        self.cec_class = cec_class
+        self.name = name
+        self.current_ndim = initial_ndim
+        self.func_instance = None
+        self._initialize(initial_ndim)
+
+    def _initialize(self, ndim):
+        """Inicjalizacja funkcji z danym wymiarem"""
+        self.current_ndim = ndim
+        self.func_instance = self.cec_class(ndim=ndim)
+        self.bounds = (float(self.func_instance.lb[0]), float(self.func_instance.ub[0]))
+        self.optimum = float(self.func_instance.f_global)
+
+    def update_dimension(self, ndim):
+        """Aktualizuj wymiar funkcji"""
+        if ndim != self.current_ndim:
+            self._initialize(ndim)
+
+    def __call__(self, x):
+        """Ewaluacja funkcji"""
+        x = np.asarray(x)
+        if len(x) != self.current_ndim:
+            self._initialize(len(x))
+        return self.func_instance.evaluate(x)
+
+
+cec_f1 = DynamicCECFunction(F12014, "CEC2014 F1: Rotated High Conditioned Elliptic")
+cec_f5 = DynamicCECFunction(F52014, "CEC2014 F5: Shifted and Rotated Ackley")
+cec_f11 = DynamicCECFunction(F112014, "CEC2014 F11: Shifted and Rotated Schwefel")
 
 BENCHMARK_FUNCTIONS = {
     "Hypersphere": {
         "name": "Hypersphere",
         "bounds": (-5.0, 5.0),
         "optimum": 0,
-        "function": hypersphere
+        "function": hypersphere,
+        "is_cec": False
     },
     "Schwefel": {
         "name": "Schwefel",
         "bounds": (-500.0, 500.0),
         "optimum": 0,
-        "function": schwefel
+        "function": schwefel,
+        "is_cec": False
     },
     "Keane": {
         "name": "Keane",
         "bounds": (0.0, 10.0),
         "optimum": 1.6,
-        "function": keane
+        "function": keane,
+        "is_cec": False
+    },
+    "CEC2014-F1": {
+        "name": "CEC2014 F1: Rotated High Conditioned Elliptic",
+        "bounds": cec_f1.bounds,
+        "optimum": cec_f1.optimum,
+        "function": cec_f1,
+        "is_cec": True
+    },
+    "CEC2014-F5": {
+        "name": "CEC2014 F5: Shifted and Rotated Ackley",
+        "bounds": cec_f5.bounds,
+        "optimum": cec_f5.optimum,
+        "function": cec_f5,
+        "is_cec": True
+    },
+    "CEC2014-F11": {
+        "name": "CEC2014 F11: Shifted and Rotated Schwefel",
+        "bounds": cec_f11.bounds,
+        "optimum": cec_f11.optimum,
+        "function": cec_f11,
+        "is_cec": True
     },
 }
 
@@ -290,7 +348,10 @@ class GeneticAlgorithmGUI:
             messagebox.showwarning("Brak danych", "Najpierw uruchom algorytm!")
             return
 
+        downloads_path = str(Path.home() / "Downloads")
+
         filename = filedialog.asksaveasfilename(
+            initialdir=downloads_path,
             defaultextension=".png",
             filetypes=[("PNG files", "*.png"), ("PDF files", "*.pdf"), ("All files", "*.*")]
         )
