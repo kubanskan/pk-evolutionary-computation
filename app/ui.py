@@ -180,10 +180,24 @@ class GeneticAlgorithmGUI:
         selection_combo = ttk.Combobox(right_frame, textvariable=self.selection_var,
                                        values=["best", "roulette", "tournament"], state='readonly')
         selection_combo.pack(fill=tk.X, pady=5)
+        selection_combo.bind('<<ComboboxSelected>>', self.on_selection_method_changed)
 
-        ttk.Label(right_frame, text="Rozmiar turnieju:").pack(anchor=tk.W)
+        # Frame dla parametrów selekcji
+        self.selection_params_frame = ttk.Frame(right_frame)
+        self.selection_params_frame.pack(fill=tk.X, pady=5)
+
+        # Rozmiar turnieju (dla tournament)
+        self.tournament_label = ttk.Label(self.selection_params_frame, text="Rozmiar turnieju:")
         self.tournament_var = tk.IntVar(value=3)
-        ttk.Entry(right_frame, textvariable=self.tournament_var, width=15).pack(anchor=tk.W, pady=5)
+        self.tournament_entry = ttk.Entry(self.selection_params_frame, textvariable=self.tournament_var, width=15)
+
+        # Procent selekcji (dla best)
+        self.selection_pct_label = ttk.Label(self.selection_params_frame, text="Procent selekcji (0-1):")
+        self.selection_pct_var = tk.DoubleVar(value=0.5)
+        self.selection_pct_entry = ttk.Entry(self.selection_params_frame, textvariable=self.selection_pct_var, width=15)
+
+        # Pokaż odpowiednie pola na start
+        self.on_selection_method_changed(None)
 
         ttk.Label(right_frame, text="Metoda krzyżowania:", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(10, 0))
         self.crossover_method_var = tk.StringVar(value="one_point")
@@ -218,6 +232,20 @@ class GeneticAlgorithmGUI:
         ttk.Button(button_frame, text="Zapisz konfigurację", command=self.save_config).pack(fill=tk.X, pady=5)
         ttk.Button(button_frame, text="Wczytaj konfigurację", command=self.load_config).pack(fill=tk.X, pady=5)
 
+    def on_selection_method_changed(self, event):
+        """Pokaż/ukryj parametry w zależności od metody selekcji"""
+        # Usuń wszystkie widgety
+        for widget in self.selection_params_frame.winfo_children():
+            widget.pack_forget()
+
+        method = self.selection_var.get()
+
+        if method == "tournament":
+            self.tournament_label.pack(anchor=tk.W)
+            self.tournament_entry.pack(anchor=tk.W, pady=5)
+        elif method == "best":
+            self.selection_pct_label.pack(anchor=tk.W)
+            self.selection_pct_entry.pack(anchor=tk.W, pady=5)
     def create_results_tab(self):
         """Tworzenie zakładki wyników"""
 
@@ -299,6 +327,7 @@ class GeneticAlgorithmGUI:
             if len(result['best_solution']) > 5:
                 self.results_text.insert(tk.END, f"  ... (pozostałe {len(result['best_solution']) - 5} zmiennych)\n")
 
+            self.results_text.insert(tk.END, "\n" + "*" * 60 + "\n\n")
 
             run_id = self.db_manager.save_run(func_name, config.num_variables, result)
 

@@ -54,7 +54,7 @@ class GeneticAlgorithmConfig:
         strategies = {
             "best": lambda pop, n: Selection.best(
                 pop, n,
-                selection_percentage=0.5,
+                selection_percentage=self.config.selection_percentage,  # ZMIEŃ tutaj
                 optimization_type=self.config.optimization_type
             ),
             "roulette": lambda pop, n: Selection.roulette(
