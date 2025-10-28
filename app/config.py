@@ -14,6 +14,7 @@ class GAConfig:
     elite_size: int = 2
     selection_method: str = "tournament"
     tournament_size: int = 3
+    selection_percentage: float = 0.5
     crossover_method: str = "one_point"
     mutation_method: str = "one_point"
     bounds: Tuple[float, float] = (-100, 100)
