@@ -2,7 +2,7 @@ import time
 import numpy as np
 from typing import Callable, List
 from app.config import GAConfig
-from ga.chromosome import  Individual
+from ga.chromosome import Individual
 from ga.population import Population
 from ga.mutation import Mutation
 from ga.crossover import Crossover
@@ -205,8 +205,6 @@ class GeneticAlgorithmConfig:
 
         self.population.evaluate(self.fitness_function)
         self.update_best_individual()
-        self.collect_statistics(0)
-
 
         for generation in range(1, self.config.num_generations + 1):
             elites = []
