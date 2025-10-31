@@ -11,9 +11,41 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from app.database import DataBase
 from pathlib import Path
 
-hypersphere = Hypersphere()
-schwefel = Schwefel()
-keane = Keane()
+
+class DynamicBenchmarkFunction:
+    """Wrapper dla funkcji benchmark z dynamiczną zmianą wymiaru"""
+
+    def __init__(self, benchmark_class, name):
+        self.benchmark_class = benchmark_class
+        self.name = name
+        self.func_instance = None
+        self.current_ndim = None
+        self.bounds = None
+        self.optimum = None
+
+    def _initialize(self, ndim):
+        """Inicjalizacja funkcji z danym wymiarem"""
+        if ndim != self.current_ndim:
+            self.current_ndim = ndim
+            # Utwórz instancję z konkretnym wymiarem
+            self.func_instance = self.benchmark_class(n_dimensions=ndim)
+
+            # Pobierz bounds
+            bounds_tuple = self.func_instance.suggested_bounds()
+            self.bounds = (float(bounds_tuple[0][0]), float(bounds_tuple[1][0]))
+
+            # Pobierz optimum
+            minima_data = self.func_instance.minima()
+            if minima_data and len(minima_data) > 0:
+                self.optimum = float(minima_data[0].score)
+            else:
+                self.optimum = 0.0
+
+    def __call__(self, x):
+        """Ewaluacja funkcji"""
+        x = np.asarray(x)
+        self._initialize(len(x))
+        return self.func_instance(x)
 
 
 class DynamicCECFunction:
@@ -45,6 +77,9 @@ class DynamicCECFunction:
             self._initialize(len(x))
         return self.func_instance.evaluate(x)
 
+dynamic_hypersphere = DynamicBenchmarkFunction(Hypersphere, "Hypersphere")
+dynamic_schwefel = DynamicBenchmarkFunction(Schwefel, "Schwefel")
+dynamic_keane = DynamicBenchmarkFunction(Keane, "Keane")
 
 cec_f1 = DynamicCECFunction(F12014, "CEC2014 F1: Rotated High Conditioned Elliptic")
 cec_f5 = DynamicCECFunction(F52014, "CEC2014 F5: Shifted and Rotated Ackley")
@@ -54,22 +89,22 @@ BENCHMARK_FUNCTIONS = {
     "Hypersphere": {
         "name": "Hypersphere",
         "bounds": (-5.0, 5.0),
-        "optimum": 0,
-        "function": hypersphere,
+        "optimum": 0.0,
+        "function": dynamic_hypersphere,
         "is_cec": False
     },
     "Schwefel": {
         "name": "Schwefel",
         "bounds": (-500.0, 500.0),
-        "optimum": 0,
-        "function": schwefel,
+        "optimum": 0.0,
+        "function": dynamic_schwefel,
         "is_cec": False
     },
     "Keane": {
         "name": "Keane",
         "bounds": (0.0, 10.0),
         "optimum": 1.6,
-        "function": keane,
+        "function": dynamic_keane,
         "is_cec": False
     },
     "CEC2014-F1": {
@@ -229,8 +264,8 @@ class GeneticAlgorithmGUI:
         button_frame.pack(fill=tk.X, pady=20)
 
         ttk.Button(button_frame, text="Uruchom algorytm", command=self.run_algorithm).pack(fill=tk.X, pady=5)
-        ttk.Button(button_frame, text="Zapisz konfigurację", command=self.save_config).pack(fill=tk.X, pady=5)
-        ttk.Button(button_frame, text="Wczytaj konfigurację", command=self.load_config).pack(fill=tk.X, pady=5)
+        #ttk.Button(button_frame, text="Zapisz konfigurację", command=self.save_config).pack(fill=tk.X, pady=5)
+        #ttk.Button(button_frame, text="Wczytaj konfigurację", command=self.load_config).pack(fill=tk.X, pady=5)
 
     def on_selection_method_changed(self, event):
         """Pokaż/ukryj parametry w zależności od metody selekcji"""
@@ -303,8 +338,20 @@ class GeneticAlgorithmGUI:
             config = self.get_config()
             func_name = self.function_var.get()
             func_info = BENCHMARK_FUNCTIONS[func_name]
+            func = func_info["function"]
 
-            ga = GeneticAlgorithmConfig(config, func_info["function"])
+            if isinstance(func, DynamicBenchmarkFunction):
+                test_x = np.zeros(config.num_variables)
+                func(test_x)
+                func_info["bounds"] = func.bounds
+                func_info["optimum"] = func.optimum
+
+            elif isinstance(func, DynamicCECFunction):
+                func.update_dimension(config.num_variables)
+                func_info["bounds"] = func.bounds
+                func_info["optimum"] = func.optimum
+
+            ga = GeneticAlgorithmConfig(config, func)
 
             self.results_text.insert(tk.END, f"Rozpoczęto optymalizację funkcji: {func_info['name']}\n")
             self.results_text.insert(tk.END, f"Liczba zmiennych: {config.num_variables}\n")
