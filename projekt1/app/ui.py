@@ -314,7 +314,7 @@ class GeneticAlgorithmGUI:
         """Pobranie konfiguracji z GUI"""
         func_name = self.function_var.get()
         bounds = BENCHMARK_FUNCTIONS[func_name]["bounds"]
-
+        print(bounds)
         return GAConfig(
             population_size=self.pop_size_var.get(),
             num_generations=self.generations_var.get(),
@@ -339,7 +339,6 @@ class GeneticAlgorithmGUI:
             func_name = self.function_var.get()
             func_info = BENCHMARK_FUNCTIONS[func_name]
             func = func_info["function"]
-
             if isinstance(func, DynamicBenchmarkFunction):
                 test_x = np.zeros(config.num_variables)
                 func(test_x)
@@ -350,7 +349,8 @@ class GeneticAlgorithmGUI:
                 func.update_dimension(config.num_variables)
                 func_info["bounds"] = func.bounds
                 func_info["optimum"] = func.optimum
-
+            print( func_info["optimum"], 'func_info')
+            print(func.optimum, func_name, 'func')
             ga = GeneticAlgorithmConfig(config, func)
 
             self.results_text.insert(tk.END, f"Rozpoczęto optymalizację funkcji: {func_info['name']}\n")
