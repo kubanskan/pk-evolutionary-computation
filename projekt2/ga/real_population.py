@@ -1,6 +1,6 @@
 from typing import List, Tuple, Callable
 import numpy as np
-from real_chromosome import RealIndividual, RealChromosome
+from .real_chromosome import RealIndividual, RealChromosome
 
 
 class RealPopulation:

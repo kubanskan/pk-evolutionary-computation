@@ -1,19 +1,27 @@
 import time
 import numpy as np
-from typing import Callable, List
-from app.config import GAConfig
-from ga.chromosome import Individual
-from ga.population import Population
-from ga.mutation import Mutation
-from ga.crossover import Crossover
-from ga.selection import Selection
-from ga.elitism import Elitism
-from ga.inversion import Inversion
+from typing import Callable, List, Union
+from ..app.config import GAConfig
+
+from ..ga.chromosome import Individual
+from ..ga.population import Population
+from ..ga.mutation import Mutation
+from ..ga.crossover import Crossover
+from ..ga.inversion import Inversion
+
+from ..ga.real_chromosome import RealIndividual
+from ..ga.real_population import RealPopulation
+from ..ga.real_crossover import RealCrossover
+from ..ga.real_mutation import RealMutation
+
+from ..ga.selection import Selection
+from ..ga.elitism import Elitism
 
 
 class GeneticAlgorithmConfig:
     """
     Główna klasa algorytmu genetycznego z pełną implementacją ewolucji.
+    Obsługuje zarówno reprezentację binarną jak i rzeczywistą.
     """
 
     def __init__(self, config: GAConfig, objective_function: Callable):
@@ -30,12 +38,21 @@ class GeneticAlgorithmConfig:
         bounds = [(config.bounds[0], config.bounds[1])
                   for _ in range(config.num_variables)]
 
-        self.population = Population(
-            population_size=config.population_size,
-            n_variables=config.num_variables,
-            bounds=bounds,
-            precision=config.precision
-        )
+        self.representation = config.representation
+
+        if self.representation == "binary":
+            self.population = Population(
+                population_size=config.population_size,
+                n_variables=config.num_variables,
+                bounds=bounds,
+                precision=config.precision
+            )
+        else:
+            self.population = RealPopulation(
+                population_size=config.population_size,
+                n_variables=config.num_variables,
+                bounds=bounds
+            )
 
         self.best_individual = None
         self.history = {
@@ -50,11 +67,11 @@ class GeneticAlgorithmConfig:
         self.mutation_strategy = self.get_mutation_strategy()
 
     def get_selection_strategy(self):
-        """Wybór strategii selekcji."""
+        """Wybór strategii selekcji (wspólna dla obu reprezentacji)."""
         strategies = {
             "best": lambda pop, n: Selection.best(
                 pop, n,
-                selection_percentage=self.config.selection_percentage,  # ZMIEŃ tutaj
+                selection_percentage=self.config.selection_percentage,
                 optimization_type=self.config.optimization_type
             ),
             "roulette": lambda pop, n: Selection.roulette(
@@ -70,43 +87,89 @@ class GeneticAlgorithmConfig:
         return strategies[self.config.selection_method]
 
     def get_crossover_strategy(self):
-        """Wybór strategii krzyżowania."""
-        strategies = {
-            "one_point": lambda p1, p2: Crossover.one_point(
-                p1, p2,
-                crossover_probability=self.config.crossover_prob
-            ),
-            "two_point": lambda p1, p2: Crossover.two_point(
-                p1, p2,
-                crossover_probability=self.config.crossover_prob
-            ),
-            "uniform": lambda p1, p2: Crossover.uniform(
-                p1, p2,
-                crossover_probability=self.config.crossover_prob
-            ),
-            "discrete": lambda p1, p2: Crossover.discrete(
-                p1, p2,
-                crossover_probability=self.config.crossover_prob
-            )
-        }
+        """Wybór strategii krzyżowania (różna dla binarnej i rzeczywistej)."""
+        if self.representation == "binary":
+            strategies = {
+                "one_point": lambda p1, p2: Crossover.one_point(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob
+                ),
+                "two_point": lambda p1, p2: Crossover.two_point(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob
+                ),
+                "uniform": lambda p1, p2: Crossover.uniform(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob
+                ),
+                "discrete": lambda p1, p2: Crossover.discrete(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob
+                )
+            }
+        else:
+            strategies = {
+                "arithmetic": lambda p1, p2: RealCrossover.arithmetic(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob,
+                    alpha=self.config.arithmetic_alpha
+                ),
+                "linear": lambda p1, p2: RealCrossover.linear(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob,
+                    fitness_function=self.fitness_function,
+                    minimize=self.config.optimization_type == 'minimize'
+                ),
+                "blend_alpha": lambda p1, p2: RealCrossover.blend_alpha(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob,
+                    alpha=self.config.blend_alpha
+                ),
+                "blend_alpha_beta": lambda p1, p2: RealCrossover.blend_alpha_beta(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob,
+                    alpha=self.config.blend_alpha_param,
+                    beta=self.config.blend_beta_param
+                ),
+                "averaging": lambda p1, p2: RealCrossover.averaging(
+                    p1, p2,
+                    crossover_probability=self.config.crossover_prob
+                )
+            }
+
         return strategies[self.config.crossover_method]
 
     def get_mutation_strategy(self):
-        """Wybór strategii mutacji."""
-        strategies = {
-            "one_point": lambda c: Mutation.one_point(
-                c,
-                mutation_probability=self.config.mutation_prob
-            ),
-            "two_point": lambda c: Mutation.two_point(
-                c,
-                mutation_probability=self.config.mutation_prob
-            ),
-            "boundary": lambda c: Mutation.boundary(
-                c,
-                mutation_probability=self.config.mutation_prob
-            )
-        }
+        """Wybór strategii mutacji (różna dla binarnej i rzeczywistej)."""
+        if self.representation == "binary":
+            strategies = {
+                "one_point": lambda c: Mutation.one_point(
+                    c,
+                    mutation_probability=self.config.mutation_prob
+                ),
+                "two_point": lambda c: Mutation.two_point(
+                    c,
+                    mutation_probability=self.config.mutation_prob
+                ),
+                "boundary": lambda c: Mutation.boundary(
+                    c,
+                    mutation_probability=self.config.mutation_prob
+                )
+            }
+        else:
+            strategies = {
+                "uniform": lambda c: RealMutation.uniform(
+                    c,
+                    mutation_probability=self.config.mutation_prob,
+                    mutation_range=self.config.mutation_range
+                ),
+                "gaussian": lambda c: RealMutation.gaussian(
+                    c,
+                    mutation_probability=self.config.mutation_prob,
+                    sigma=self.config.gaussian_sigma
+                )
+            }
+
         return strategies[self.config.mutation_method]
 
     def fitness_function(self, phenotype: np.ndarray) -> float:
@@ -150,17 +213,19 @@ class GeneticAlgorithmConfig:
         self.history['avg_fitness'].append(np.mean(fitnesses))
         self.history['std_fitness'].append(np.std(fitnesses))
 
-    def create_new_population(self, elites: List[Individual]) -> List[Individual]:
+    def create_new_population(self, elites: List[Union[Individual, RealIndividual]]) -> List[
+        Union[Individual, RealIndividual]]:
         """
         Tworzenie nowej populacji z wykorzystaniem operatorów genetycznych.
         """
         new_population = elites.copy()
+
         while len(new_population) < self.config.population_size:
 
             parents = self.selection_strategy(self.population, 2)
 
             if len(parents) < 2:
-                parents = parents + parents  # Duplikuj jeśli jest tylko jeden
+                parents = parents + parents
 
             parent1, parent2 = parents[0], parents[1]
 
@@ -172,20 +237,22 @@ class GeneticAlgorithmConfig:
             child1_chromosome = self.mutation_strategy(child1_chromosome)
             child2_chromosome = self.mutation_strategy(child2_chromosome)
 
-            if np.random.rand() < self.config.inversion_prob:
+            if self.representation == "binary" and np.random.rand() < self.config.inversion_prob:
                 child1_chromosome = Inversion.inverse(
                     child1_chromosome,
                     inversion_probability=1.0
                 )
-            if np.random.rand() < self.config.inversion_prob:
                 child2_chromosome = Inversion.inverse(
                     child2_chromosome,
                     inversion_probability=1.0
                 )
 
-
-            child1 = Individual(child1_chromosome)
-            child2 = Individual(child2_chromosome)
+            if self.representation == "binary":
+                child1 = Individual(child1_chromosome)
+                child2 = Individual(child2_chromosome)
+            else:
+                child1 = RealIndividual(child1_chromosome)
+                child2 = RealIndividual(child2_chromosome)
 
             if len(new_population) < self.config.population_size:
                 new_population.append(child1)
@@ -202,11 +269,11 @@ class GeneticAlgorithmConfig:
         """
         start_time = time.time()
 
-
         self.population.evaluate(self.fitness_function)
         self.update_best_individual()
 
         for generation in range(1, self.config.num_generations + 1):
+
             elites = []
             if self.config.elite_size > 0:
                 elites = Elitism.elitism_strategy(
@@ -230,7 +297,8 @@ class GeneticAlgorithmConfig:
             'elapsed_time': elapsed_time,
             'history': self.history,
             'generations': self.config.num_generations,
-            'final_population_size': len(self.population.individuals)
+            'final_population_size': len(self.population.individuals),
+            'representation': self.representation
         }
 
         return result

@@ -1,14 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from app.config import GAConfig
+from .config import GAConfig
 from benchmark_functions import Hypersphere, Schwefel, Keane
 from opfunu.cec_based.cec2014 import F12014, F52014, F112014
 import numpy as np
 import json
-from ga.genecticalgorithm import GeneticAlgorithmConfig
+
+from ..ga.genecticalgorithm import GeneticAlgorithmConfig
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from app.database import DataBase
+from .database import DataBase
 from pathlib import Path
 
 

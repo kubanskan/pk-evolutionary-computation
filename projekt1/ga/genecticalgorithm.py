@@ -1,14 +1,14 @@
 import time
 import numpy as np
 from typing import Callable, List
-from app.config import GAConfig
-from ga.chromosome import Individual
-from ga.population import Population
-from ga.mutation import Mutation
-from ga.crossover import Crossover
-from ga.selection import Selection
-from ga.elitism import Elitism
-from ga.inversion import Inversion
+from ..app.config import GAConfig
+from .chromosome import Individual
+from .population import Population
+from .mutation import Mutation
+from .crossover import Crossover
+from .selection import Selection
+from .elitism import Elitism
+from .inversion import Inversion
 
 
 class GeneticAlgorithmConfig:

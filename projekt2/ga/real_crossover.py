@@ -1,6 +1,6 @@
 from typing import Tuple
 import numpy as np
-from real_chromosome import RealChromosome
+from .real_chromosome import RealChromosome
 
 
 class RealCrossover:
