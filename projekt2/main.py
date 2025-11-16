@@ -1,5 +1,5 @@
 import tkinter as tk
-from .app.ui import GeneticAlgorithmGUI
+from projekt2.app.ui import GeneticAlgorithmGUI
 
 def main():
     """Uruchomienie GUI aplikacji"""

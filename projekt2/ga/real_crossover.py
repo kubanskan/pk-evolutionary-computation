@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
 from .real_chromosome import RealChromosome
 
@@ -40,6 +40,33 @@ class RealCrossover:
         child2.clip_to_bounds()
 
         return child1, child2
+
+    @staticmethod
+    def multi_parent_arithmetic(parents: List[RealChromosome],
+                                alphas: Tuple[float, ...] = (0.2, 0.3, 0.5)) -> RealChromosome:
+        """
+        Wersja wieloosobnicza krzyżowania arytmetycznego.
+
+        Nowy potomek jest ważoną sumą genów wszystkich rodziców.
+        Wymaga, aby suma współczynników alpha wynosiła 1.0 (lub była bliska 1.0).
+
+        Potomek (C) = sum(alpha_i * Parent_i)
+        """
+        if alphas is None or len(alphas) == 0:
+            n_parents = len(parents)
+            alphas = [1.0 / n_parents] * n_parents
+            print(f"alphas = {alphas}")
+
+        child = parents[0].copy()
+        n_genes = len(child.genes)
+        new_genes = np.zeros(n_genes)
+
+        for alpha, parent in zip(alphas, parents):
+            new_genes += alpha * parent.genes
+
+        child.genes = new_genes
+        child.clip_to_bounds()
+        return child
 
     @staticmethod
     def linear(parent1: RealChromosome,
