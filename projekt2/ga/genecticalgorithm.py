@@ -134,10 +134,29 @@ class GeneticAlgorithmConfig:
                 "averaging": lambda p1, p2: RealCrossover.averaging(
                     p1, p2,
                     crossover_probability=self.config.crossover_prob
-                )
+                ),
+                "multi_parent_arithmetic": lambda p1, p2: self._multi_parent_crossover_wrapper(p1, p2)
             }
 
         return strategies[self.config.crossover_method]
+
+    def _multi_parent_crossover_wrapper(self, p1, p2):
+        """
+        Wrapper dla krzyżowania wieloosobniczego - wybiera N rodziców.
+        """
+        num_parents = getattr(self.config, 'num_parents', 2)
+        parents = [p1, p2]
+
+        if num_parents > 2:
+            additional_needed = num_parents - 2
+
+            additional_parents = self.selection_strategy(self.population, additional_needed)
+            parents.extend([parent.chromosome for parent in additional_parents])
+
+        child1 = RealCrossover.multi_parent_arithmetic(parents, alphas=None)
+        child2 = RealCrossover.multi_parent_arithmetic(parents, alphas=None)
+
+        return child1, child2
 
     def get_mutation_strategy(self):
         """Wybór strategii mutacji (różna dla binarnej i rzeczywistej)."""

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 from dataclasses import dataclass
 
 
@@ -33,3 +33,4 @@ class GAConfig:
     gaussian_sigma: float = 0.1
     bounds: Tuple[float, float] = (-100, 100)
     optimization_type: str = "minimize"
+    num_parents: int = 2

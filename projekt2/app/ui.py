@@ -302,6 +302,7 @@ class GeneticAlgorithmGUI:
         else:
             methods = [
                 ("Arytmetyczne", "arithmetic"),
+                ("Arytmetyczne wieloosobnicze", "multi_parent_arithmetic"),
                 ("Liniowe", "linear"),
                 ("Mieszające alfa (BLX-α)", "blend_alpha"),
                 ("Mieszające alfa-beta", "blend_alpha_beta"),
@@ -338,6 +339,11 @@ class GeneticAlgorithmGUI:
             ttk.Label(self.crossover_params_frame, text="Alpha:").grid(row=0, column=0, sticky=tk.W)
             ttk.Entry(self.crossover_params_frame, textvariable=self.arithmetic_alpha_var,
                       width=10).grid(row=0, column=1)
+        elif method == "multi_parent_arithmetic":
+            ttk.Label(self.crossover_params_frame, text="Liczba rodziców:").grid(row=0, column=0, sticky=tk.W)
+            self.num_parents_var = tk.IntVar(value=2)
+            ttk.Spinbox(self.crossover_params_frame, textvariable=self.num_parents_var,
+                        from_=2, to=10, width=10).grid(row=0, column=1)
         elif method == "blend_alpha":
             ttk.Label(self.crossover_params_frame, text="Alpha:").grid(row=0, column=0, sticky=tk.W)
             ttk.Entry(self.crossover_params_frame, textvariable=self.blend_alpha_var,
@@ -490,6 +496,8 @@ class GeneticAlgorithmGUI:
                 config.mutation_range = self.mutation_range_var.get()
             if hasattr(self, 'gaussian_sigma_var'):
                 config.gaussian_sigma = self.gaussian_sigma_var.get()
+            if hasattr(self, 'num_parents_var'):
+                config.num_parents = self.num_parents_var.get()
 
         return config
 

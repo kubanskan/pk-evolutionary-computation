@@ -115,6 +115,8 @@ if __name__ == "__main__":
     print(f"Geny chromosomu (Rzeczywiste Wartości): {real_chromosome.genes}")
 
     real_chromosome.genes[0] = 100.0
+    print(f"Zmieniony pierwszy gen chromosomu (Rzeczywiste Wartości): {real_chromosome.genes}")
+
     real_chromosome.clip_to_bounds()
     print(f"Geny po clip_to_bounds: {real_chromosome.genes}")
 
@@ -281,11 +283,14 @@ if __name__ == "__main__":
     print(f"Rodzice (Px, Py, Pz): {parent_x.genes}, {parent_y.genes}, {parent_z.genes}")
     print(f"Wagi (Alphy): {alphas_multi}")
 
-    # Wywołanie nowej metody (zakładając jej poprawną implementację w RealCrossover)
-    new_child = RealCrossover.multi_parent_arithmetic(parents=parents_list)
+    new_child = RealCrossover.multi_parent_arithmetic(parents=parents_list, alphas=alphas_multi)
 
     print(f"\nNowy Potomek: {new_child.genes}")
     print(f"Oczekiwane Geny: [5.1, 7.5]")
+
+    new_child_2 = RealCrossover.multi_parent_arithmetic(parents=parents_list, alphas=None)
+
+    print(f"\nNowy Potomek: {new_child_2.genes}")
 
     expected_genes = np.array([5.1, 7.5])
     is_correct = np.allclose(new_child.genes, expected_genes)

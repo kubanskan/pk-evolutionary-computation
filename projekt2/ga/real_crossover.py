@@ -43,7 +43,7 @@ class RealCrossover:
 
     @staticmethod
     def multi_parent_arithmetic(parents: List[RealChromosome],
-                                alphas: Tuple[float, ...] = (0.2, 0.3, 0.5)) -> RealChromosome:
+                                alphas: Tuple[float, ...] = None) -> RealChromosome:
         """
         Wersja wieloosobnicza krzyżowania arytmetycznego.
 
@@ -54,8 +54,9 @@ class RealCrossover:
         """
         if alphas is None or len(alphas) == 0:
             n_parents = len(parents)
-            alphas = [1.0 / n_parents] * n_parents
-            print(f"alphas = {alphas}")
+            random_weights = np.random.random(n_parents)
+            alphas = tuple(random_weights / random_weights.sum())
+            print(f"alphas={alphas}")
 
         child = parents[0].copy()
         n_genes = len(child.genes)
