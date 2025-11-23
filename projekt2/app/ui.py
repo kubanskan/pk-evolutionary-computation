@@ -524,7 +524,7 @@ class GeneticAlgorithmGUI:
 
             ga = GeneticAlgorithmConfig(config, func)
 
-            self.results_text.delete(1.0, tk.END)
+            # self.results_text.delete(1.0, tk.END)
             self.results_text.insert(tk.END, f"Rozpoczęto optymalizację funkcji: {func_info['name']}\n")
             self.results_text.insert(tk.END, f"Reprezentacja: {config.representation.upper()}\n")
             self.results_text.insert(tk.END, f"Liczba zmiennych: {config.num_variables}\n")

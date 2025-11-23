@@ -56,7 +56,6 @@ class RealCrossover:
             n_parents = len(parents)
             random_weights = np.random.random(n_parents)
             alphas = tuple(random_weights / random_weights.sum())
-            print(f"alphas={alphas}")
 
         child = parents[0].copy()
         n_genes = len(child.genes)
