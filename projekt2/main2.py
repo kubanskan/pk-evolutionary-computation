@@ -3,11 +3,11 @@ import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from projekt2.app.database import DataBase
+from projekt2.app.ui import BENCHMARK_FUNCTIONS
+from projekt2.ga.genecticalgorithm import GeneticAlgorithmConfig
+from projekt2.app.config import GAConfig
 
-from app.database import DataBase
-from app.ui import BENCHMARK_FUNCTIONS
-from ga.genecticalgorithm import GeneticAlgorithmConfig
-from app.config import GAConfig
 
 def run_single_set(params, repetitions, output_dir, set_index):
     Path(output_dir).mkdir(exist_ok=True)
@@ -21,14 +21,17 @@ def run_single_set(params, repetitions, output_dir, set_index):
         func.update_dimension(params['num_variables'])
     elif callable(func):
         func(np.zeros(params['num_variables']))
+
     func_info["bounds"] = func.bounds
     func_info["optimum"] = func.optimum
 
-    print(f"Zestaw {set_index+1}: {params}", flush=True)
+    print(f"Zestaw {set_index + 1}: {params}", flush=True)
     results_for_set = []
 
+    objective_wrapper = lambda x: func(x)
+
     for r in range(repetitions):
-        print(f" Uruchomienie {r+1}/{repetitions}", flush=True)
+        print(f" Uruchomienie {r + 1}/{repetitions}", flush=True)
         config = GAConfig(
             population_size=params.get('population_size', 100),
             num_generations=params.get('num_generations', 100),
@@ -42,17 +45,26 @@ def run_single_set(params, repetitions, output_dir, set_index):
             tournament_size=params.get('tournament_size', 3),
             crossover_method=params.get('crossover_method', 'one_point'),
             mutation_method=params.get('mutation_method', 'one_point'),
+            representation=params.get('representation', "binary"),
+            arithmetic_alpha=params.get('arithmetic_alpha'),
+            blend_alpha=params.get('blend_alpha'),
+            blend_alpha_param=params.get('blend_alpha_param'),
+            blend_beta_param=params.get('blend_beta_param'),
+            mutation_range=params.get('mutation_range'),
+            gaussian_sigma=params.get('gaussian_sigma'),
+            num_parents=params.get('num_parents', 2),
+            selection_percentage=params.get('selection_percentage'),
             bounds=func_info["bounds"],
             optimization_type=params.get('optimization_type', 'minimize')
         )
 
-        ga = GeneticAlgorithmConfig(config, func)
+        ga = GeneticAlgorithmConfig(config, objective_wrapper)
         result = ga.evolve()
         db_manager.save_run(func_name, config.num_variables, result)
 
         results_for_set.append({
             "run_index": r + 1,
-            "params": {  # wszystkie parametry GA dla tego run
+            "params": {
                 "population_size": config.population_size,
                 "num_generations": config.num_generations,
                 "num_variables": config.num_variables,
@@ -122,17 +134,15 @@ def run_single_set(params, repetitions, output_dir, set_index):
         "error": abs(best_run['result']['best_fitness'] - func_info['optimum'])
     }
 
-
 def batch_run_parallel(param_sets, repetitions=10, output_dir="batch_results"):
     Path(output_dir).mkdir(exist_ok=True)
     final_summary = []
-
-    with ProcessPoolExecutor() as executor:
+    MAX_WORKERS = 4
+    with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(run_single_set, params, repetitions, output_dir, i)
                    for i, params in enumerate(param_sets)]
         for future in as_completed(futures):
             final_summary.append(future.result())
-
 
     report_file = Path(output_dir) / "summary_report.json"
     with open(report_file, 'w') as f:
@@ -141,165 +151,122 @@ def batch_run_parallel(param_sets, repetitions=10, output_dir="batch_results"):
     print("Batch run zakończony. Wszystkie wyniki zapisane.", flush=True)
 
 
-# Przykładowe zestawy parametrów
 param_sets = [
     {
-        "function": "CEC2014-F5",
-        "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
-        "selection_method": "roulette",
-        "tournament_size": None,
-        "crossover_method": "two_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.02,
-        "inversion_prob": 0.1
-    },
-    {
-        "function": "CEC2014-F5",
-        "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
-        "selection_method": "roulette",
-        "tournament_size": None,
-        "crossover_method": "one_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.3,
-        "inversion_prob": 0.1
-    },
-    {
-        "function": "CEC2014-F5",
-        "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
+        "function": "Schwefel",
+        "representation": "real",
+        "num_variables": 2,
+        "population_size": 1000,
+        "num_generations": 200,
+        "elite_size": 3,
         "selection_method": "tournament",
-        "tournament_size": 4,
-        "crossover_method": "two_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.02,
-        "inversion_prob": 0.1
-    },
-    { #pomiń
-        "function": "CEC2014-F5",
-        "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
-        "selection_method": "tournament",
-        "tournament_size": 4,
-        "crossover_method": "two_poin",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.3,
-        "inversion_prob": 0.1
+        "tournament_size": 3,
+        "crossover_method": "arithmetic",
+        "crossover_prob": 0.85,
+        "arithmetic_alpha": 0.5,
+        "mutation_method": "uniform",
+        "mutation_prob": 0.05,
+        "mutation_range": 0.1,
+        "optimization_type": "minimize"
     },
     {
-        "function": "CEC2014-F5",
-        "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
+        "function": "Schwefel",
+        "representation": "real",
+        "num_variables": 5,
+        "population_size": 2000,
+        "num_generations": 200,
+        "elite_size": 3,
         "selection_method": "best",
-        "selection_pct": 0.2,
-        "crossover_method": "two_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.02,
-        "inversion_prob": 0.1
-    },
-    {
-        "function": "CEC2014-F5",
-        "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
-        "selection_method": "best",
-        "selection_pct": 0.2,
-        "crossover_method": "one_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
+        "selection_percentage": 0.5,
+        "crossover_method": "blend_alpha",
+        "crossover_prob": 0.9,
+        "blend_alpha": 0.5,
+        "mutation_method": "gaussian",
         "mutation_prob": 0.3,
-        "inversion_prob": 0.1
+        "gaussian_sigma": 0.1,
+        "optimization_type": "minimize"
     },
     {
-        "function": "CEC2014-F5",
+        "function": "Schwefel",
+        "representation": "real",
         "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
-        "selection_method": "tournament",
-        "tournament_size": 4,
-        "crossover_method": "two_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.02,
-        "inversion_prob": 0.1
-    },
-    {
-        "function": "CEC2014-F5",
-        "num_variables": 10,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
-        "selection_method": "tournament",
-        "tournament_size": 4,
-        "crossover_method": "one_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "one_point",
-        "mutation_prob": 0.3,
-        "inversion_prob": 0.1
-    },
-]
-
-
-param_sets = [
-    {
-        "function": "CEC2014-F5",
-        "num_variables": 20,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
+        "population_size": 3000,
+        "num_generations": 200,
+        "elite_size": 5,
         "selection_method": "roulette",
-        "tournament_size": None,
-        "crossover_method": "two_point",
-        "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.02,
-        "inversion_prob": 0.1
+        "crossover_method": "linear",
+        "crossover_prob": 0.85,
+        "mutation_method": "uniform",
+        "mutation_prob": 0.2,
+        "mutation_range": 0.15,
+        "optimization_type": "minimize"
     },
     {
-        "function": "CEC2014-F5",
-        "num_variables": 20,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
+        "function": "Schwefel",
+        "representation": "real",
+        "num_variables": 2,
+        "population_size": 1000,
+        "num_generations": 200,
+        "elite_size": 5,
+        "selection_method": "tournament",
+        "tournament_size": 5,
+        "crossover_method": "averaging",
+        "crossover_prob": 0.85,
+        "mutation_method": "uniform",
+        "mutation_prob": 0.15,
+        "mutation_range": 0.15,
+        "optimization_type": "minimize"
+    },
+    {
+        "function": "Schwefel",
+        "representation": "real",
+        "num_variables": 10,
+        "population_size": 3000,
+        "num_generations": 200,
+        "elite_size": 3,
+        "selection_method": "tournament",
+        "tournament_size": 8,
+        "crossover_method": "blend_alpha",
+        "crossover_prob": 0.9,
+        "blend_alpha": 0.5,
+        "mutation_method": "gaussian",
+        "mutation_prob": 0.4,
+        "gaussian_sigma": 0.1,
+        "optimization_type": "minimize"
+    },
+    {
+        "function": "Schwefel",
+        "representation": "real",
+        "num_variables": 10,
+        "population_size": 500,
+        "num_generations": 200,
+        "elite_size": 2,
+        "selection_method": "tournament",
+        "tournament_size": 3,
+        "crossover_method": "arithmetic",
+        "crossover_prob": 0.85,
+        "arithmetic_alpha": 0.5,
+        "mutation_method": "uniform",
+        "mutation_prob": 0.1,
+        "mutation_range": 0.15,
+        "optimization_type": "minimize"
+    },
+    {
+        "function": "Schwefel",
+        "representation": "real",
+        "num_variables": 2,
+        "population_size": 1000,
+        "num_generations": 300,
+        "elite_size": 3,
         "selection_method": "tournament",
         "tournament_size": 4,
-        "crossover_method": "two_point",
+        "crossover_method": "blend_alpha",
         "crossover_prob": 0.8,
-        "mutation_method": "two_point",
-        "mutation_prob": 0.02,
-        "inversion_prob": 0.1
-    },
-    {
-        "function": "CEC2014-F5",
-        "num_variables": 20,
-        "population_size": 10_000,
-        "num_generations": 1000,
-        "elite_size": 10,
-        "selection_method": "best",
-        "selection_pct": 0.2,
-        "crossover_method": "two_point",
-        "crossover_prob": 0.8,
-        "mutation_method": " two_point",
-        "mutation_prob": 0.02,
-        "inversion_prob": 0.1
+        "blend_alpha": 0.5,
+        "mutation_method": "uniform",
+        "mutation_prob": 0.15,
+        "mutation_range": 0.2,
+        "optimization_type": "minimize"
     }
 ]
 

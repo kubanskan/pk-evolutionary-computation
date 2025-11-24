@@ -62,16 +62,43 @@ class GeneticAlgorithmConfig:
             'std_fitness': []
         }
 
-        self.selection_strategy = self.get_selection_strategy()
-        self.crossover_strategy = self.get_crossover_strategy()
-        self.mutation_strategy = self.get_mutation_strategy()
+        # Zmienne prywatne do leniwego ładowania strategii
+        self._selection_strategy = None
+        self._crossover_strategy = None
+        self._mutation_strategy = None
+
+    # --- Właściwości dla leniwego ładowania (Lazy Initialization) ---
+
+    @property
+    def selection_strategy(self):
+        """Ładuje strategię selekcji tylko raz, przy pierwszym użyciu."""
+        if self._selection_strategy is None:
+            self._selection_strategy = self.get_selection_strategy()
+        return self._selection_strategy
+
+    @property
+    def crossover_strategy(self):
+        """Ładuje strategię krzyżowania tylko raz, przy pierwszym użyciu."""
+        if self._crossover_strategy is None:
+            self._crossover_strategy = self.get_crossover_strategy()
+        return self._crossover_strategy
+
+    @property
+    def mutation_strategy(self):
+        """Ładuje strategię mutacji tylko raz, przy pierwszym użyciu."""
+        # Wymagane również dla mutacji, aby zapewnić pełne bezpieczeństwo deserializacji
+        if self._mutation_strategy is None:
+            self._mutation_strategy = self.get_mutation_strategy()
+        return self._mutation_strategy
+
+    # --- Metody get_strategy (Bez zmian, są już zabezpieczone przez getattr) ---
 
     def get_selection_strategy(self):
         """Wybór strategii selekcji (wspólna dla obu reprezentacji)."""
         strategies = {
             "best": lambda pop, n: Selection.best(
                 pop, n,
-                selection_percentage=self.config.selection_percentage,
+                selection_percentage=getattr(self.config, 'selection_percentage', 0.5),
                 optimization_type=self.config.optimization_type
             ),
             "roulette": lambda pop, n: Selection.roulette(
@@ -80,7 +107,7 @@ class GeneticAlgorithmConfig:
             ),
             "tournament": lambda pop, n: Selection.tournament(
                 pop, n,
-                tournament_size=self.config.tournament_size,
+                tournament_size=getattr(self.config, 'tournament_size', 3),
                 optimization_type=self.config.optimization_type
             )
         }
@@ -107,12 +134,12 @@ class GeneticAlgorithmConfig:
                     crossover_probability=self.config.crossover_prob
                 )
             }
-        else:
+        else:  # Reprezentacja "real"
             strategies = {
                 "arithmetic": lambda p1, p2: RealCrossover.arithmetic(
                     p1, p2,
                     crossover_probability=self.config.crossover_prob,
-                    alpha=self.config.arithmetic_alpha
+                    alpha=getattr(self.config, 'arithmetic_alpha', 0.5)
                 ),
                 "linear": lambda p1, p2: RealCrossover.linear(
                     p1, p2,
@@ -123,13 +150,13 @@ class GeneticAlgorithmConfig:
                 "blend_alpha": lambda p1, p2: RealCrossover.blend_alpha(
                     p1, p2,
                     crossover_probability=self.config.crossover_prob,
-                    alpha=self.config.blend_alpha
+                    alpha=getattr(self.config, 'blend_alpha', 0.5)
                 ),
                 "blend_alpha_beta": lambda p1, p2: RealCrossover.blend_alpha_beta(
                     p1, p2,
                     crossover_probability=self.config.crossover_prob,
-                    alpha=self.config.blend_alpha_param,
-                    beta=self.config.blend_beta_param
+                    alpha=getattr(self.config, 'blend_alpha_param', 0.5),
+                    beta=getattr(self.config, 'blend_beta_param', 0.5)
                 ),
                 "averaging": lambda p1, p2: RealCrossover.averaging(
                     p1, p2,
@@ -180,12 +207,14 @@ class GeneticAlgorithmConfig:
                 "uniform": lambda c: RealMutation.uniform(
                     c,
                     mutation_probability=self.config.mutation_prob,
-                    mutation_range=self.config.mutation_range
+                    # 🛡️ Zabezpieczenie: Odczyt range za pomocą getattr
+                    mutation_range=getattr(self.config, 'mutation_range', 0.15)
                 ),
                 "gaussian": lambda c: RealMutation.gaussian(
                     c,
                     mutation_probability=self.config.mutation_prob,
-                    sigma=self.config.gaussian_sigma
+                    # 🛡️ Zabezpieczenie: Odczyt sigma za pomocą getattr
+                    sigma=getattr(self.config, 'gaussian_sigma', 0.1)
                 )
             }
 

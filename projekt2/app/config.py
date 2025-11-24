@@ -22,15 +22,15 @@ class GAConfig:
     selection_percentage: float = 0.5
 
     crossover_method: str = "one_point"
-
     mutation_method: str = "one_point"
     arithmetic_alpha: float = 0.5
-
     blend_alpha: float = 0.5
     blend_alpha_param: float = 0.5
     blend_beta_param: float = 0.5
+    num_parents: int = 3
+
     mutation_range: float = 0.1
     gaussian_sigma: float = 0.1
+
     bounds: Tuple[float, float] = (-100, 100)
     optimization_type: str = "minimize"
-    num_parents: int = 2
