@@ -3,7 +3,7 @@ import logging
 import pygad
 import numpy
 import benchmark_functions as bf
-from utils import decode_with_binary_chromosome
+from decoder import decode_with_binary_chromosome
 from chromosome import BinaryChromosome
 from opfunu.cec_based.cec2014 import F52014
 
