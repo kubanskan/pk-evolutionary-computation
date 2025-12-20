@@ -19,6 +19,32 @@ from real_operators import (
 )
 
 
+def get_optimum(func_obj, func_name, n_vars):
+    if hasattr(func_obj, 'optimum'):
+        return func_obj.optimum
+    elif hasattr(func_obj, 'get_optimum'):
+        return func_obj.get_optimum()
+
+    if func_name == "schwefel":
+        known_optimums = {
+            2: 2.54e-5,
+            5: 6.36e-5,
+            10: 1.27e-4,
+            20: 2.54e-4
+        }
+
+        if n_vars in known_optimums:
+            return known_optimums[n_vars]
+        else:
+            return n_vars * 1.27e-5
+
+    elif func_name == "cec2014":
+        # Dla CEC2014
+        return getattr(func_obj, "f_global", 0.0)
+
+    return None
+
+
 def plot_results(history, title_suffix=""):
     """Generuje dwa wykresy: postęp najlepszego wyniku oraz statystyki populacji"""
     fig, axes = plt.subplots(2, 1, figsize=(10, 8))
@@ -105,7 +131,8 @@ def main():
     print("\n[1] KONFIGURACJA PROBLEMU")
     func_opts = {"schwefel": "Schwefel", "cec2014": "CEC2014 F5"}
     wybor_funkcji = pobierz_wybor("Funkcja celu:", func_opts, "schwefel")
-    n_vars = pobierz_parametr("Liczba zmiennych (wymiar)", 2, int)
+    default_n_vars = 10 if wybor_funkcji == "cec2014" else 2
+    n_vars = pobierz_parametr("Liczba zmiennych (wymiar)", default_n_vars, int)
 
     if wybor_funkcji == "schwefel":
         func_obj = bf.Schwefel(n_dimensions=n_vars)
@@ -197,7 +224,6 @@ def main():
         p_cross = crossover_arithmetic
         p_mut = mutation_gaussian
 
-    # --- FITNESS & CALLBACKS ---
     def fitness_func(ga, sol, idx):
         if typ_rep == "binarna":
             decoded = decode_with_binary_chromosome(sol, n_vars, bounds, precision)

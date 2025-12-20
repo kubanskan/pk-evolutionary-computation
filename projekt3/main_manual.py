@@ -22,7 +22,23 @@ def get_problem_settings(func_name, n_vars):
     if func_name == "schwefel":
         func_obj = bf.Schwefel(n_dimensions=n_vars)
         bounds = [(-500, 500)] * n_vars
-        optimum = 0.0
+
+        if hasattr(func_obj, 'optimum'):
+            optimum = func_obj.optimum
+        elif hasattr(func_obj, 'get_optimum'):
+            optimum = func_obj.get_optimum()
+        else:
+            known_optimums = {
+                2: 2.54e-5,
+                5: 6.36e-5,
+                10: 1.27e-4,
+                20: 2.54e-4
+            }
+
+            if n_vars in known_optimums:
+                optimum = known_optimums[n_vars]
+            else:
+                optimum = n_vars * 1.27e-5
     elif "cec2014" in func_name.lower():
         func_obj = F52014(ndim=n_vars)
         bounds = [(-100, 100)] * n_vars
@@ -268,40 +284,9 @@ def batch_run_parallel(param_sets, repetitions=5, output_dir="results_batch"):
 param_sets = [
     {
         "function": "schwefel",
-        "representation": "binary",
-        "num_variables": 10,
-        "precision": 6,
-        "population_size": 50,
-        "num_generations": 100,
-        "crossover_method": "two_points",
-        "crossover_prob": 0.8,
-        "mutation_method": "swap",
-        "mutation_prob": 0.05,
-        "selection_method": "tournament",
-        "tournament_size": 3,
-        "elite_size": 2
-    },
-    {
-        "function": "schwefel",
         "representation": "real",
-        "num_variables": 10,
-        "population_size": 50,
-        "num_generations": 100,
-        "crossover_method": "arithmetic",
-        "arithmetic_alpha": 0.5,
-        "crossover_prob": 0.9,
-        "mutation_method": "gaussian",
-        "gaussian_sigma": 1.0,
-        "mutation_prob": 0.1,
-        "selection_method": "tournament",
-        "tournament_size": 3,
-        "elite_size": 2
-    },
-    {
-        "function": "cec2014",
-        "representation": "real",
-        "num_variables": 10,
-        "population_size": 100,
+        "num_variables": 5,
+        "population_size": 500,
         "num_generations": 200,
         "crossover_method": "blend_alpha",
         "arithmetic_alpha": 0.5,
@@ -313,16 +298,16 @@ param_sets = [
         "elite_size": 2
     },
     {
-        "function": "cec2014",
+        "function": "schwefel",
         "representation": "real",
         "num_variables": 10,
-        "population_size": 100,
+        "population_size": 1000,
         "num_generations": 150,
         "crossover_method": "linear",
         "crossover_prob": 0.9,
         "mutation_method": "gaussian",
         "gaussian_sigma": 0.5,
-        "mutation_prob": 0.1,
+        "mutation_prob": 0.3,
         "selection_method": "tournament",
         "tournament_size": 5,
         "elite_size": 2
