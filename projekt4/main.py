@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from mealpy.swarm_based.WOA import OriginalWOA
 from mealpy import FloatVar
 import benchmark_functions as bf
+from opfunu.cec_based.cec2014 import F52014
 
 # 1. Funkcje celu
 
@@ -12,24 +13,55 @@ def sphere(solution):
 def schwefel(solution):
     return bf.Schwefel(n_dimensions=len(solution))(solution)
 
+def cec2014_f5(solution):
+    f = F52014(ndim=len(solution))
+    return f.evaluate(solution)
+
+
 # 2. Wybór funkcji przez użytkownika
-func_dict = {
-    "sphere": sphere,
-    "schwefel": schwefel
+functions = {
+    "1": {"name": "sphere", "func": sphere, "bounds": (-500, 500)},
+    "2": {"name": "schwefel", "func": schwefel, "bounds": (-500, 500)},
+    "3": {"name": "cec2014_f5", "func": cec2014_f5, "bounds": (-100, 100)},
 }
 
-choice = input("Wybierz funkcję celu (sphere/schwefel): ").strip().lower()
 
-if choice not in func_dict:
-    print("Niepoprawny wybór, używam domyślnie 'sphere'")
-    choice = "sphere"
+print("\nDostępne funkcje celu:")
+for k, v in functions.items():
+    print(f"{k} - {v['name']}")
 
-objective_function = func_dict[choice]
-print(f"Wybrano funkcję: {choice}")
+choice = input("\nWybierz funkcję (numer lub nazwa): ").strip().lower()
+
+selected = None
+
+# wybór po numerze
+if choice in functions:
+    selected = functions[choice]
+
+# wybór po nazwie
+else:
+    for v in functions.values():
+        if choice == v["name"]:
+            selected = v
+            break
+
+# fallback
+if selected is None:
+    print("Niepoprawny wybór, używam domyślnie: sphere")
+    selected = functions["1"]
+
+objective_function = selected["func"]
+BOUNDS = selected["bounds"]
+
+print(f"Wybrano funkcję: {selected['name']}")
 
 # 3. Definicja problemu
-N_DIMENSIONS = 2
-BOUNDS = (-500, 500)
+N_DIMENSIONS = 10
+if choice == "cec2014_f5":
+    BOUNDS = (-100, 100)
+else:
+    BOUNDS = (-500, 500)
+
 
 bounds = FloatVar(
     lb=[BOUNDS[0]] * N_DIMENSIONS,
