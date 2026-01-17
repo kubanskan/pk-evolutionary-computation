@@ -6,7 +6,6 @@ import benchmark_functions as bf
 from opfunu.cec_based.cec2014 import F52014
 
 # 1. Funkcje celu
-
 def sphere(solution):
     return np.sum(solution ** 2)
 
@@ -25,7 +24,6 @@ functions = {
     "3": {"name": "cec2014_f5", "func": cec2014_f5, "bounds": (-100, 100)},
 }
 
-
 print("\nDostępne funkcje celu:")
 for k, v in functions.items():
     print(f"{k} - {v['name']}")
@@ -33,35 +31,48 @@ for k, v in functions.items():
 choice = input("\nWybierz funkcję (numer lub nazwa): ").strip().lower()
 
 selected = None
-
-# wybór po numerze
 if choice in functions:
     selected = functions[choice]
-
-# wybór po nazwie
 else:
     for v in functions.values():
         if choice == v["name"]:
             selected = v
             break
 
-# fallback
 if selected is None:
     print("Niepoprawny wybór, używam domyślnie: sphere")
     selected = functions["1"]
 
 objective_function = selected["func"]
 BOUNDS = selected["bounds"]
-
 print(f"Wybrano funkcję: {selected['name']}")
 
-# 3. Definicja problemu
-N_DIMENSIONS = 10
+
+# 3. Interaktywna konfiguracja parametrów problemu
+# Domyślne wartości
+DEFAULT_DIMENSIONS = 2
+DEFAULT_EPOCHS = 10
+DEFAULT_POP_SIZE = 8
+
+def input_with_default(prompt, default):
+    user_input = input(f"{prompt} [domyślnie {default}]: ").strip()
+    if user_input == "":
+        return default
+    try:
+        return int(user_input)
+    except ValueError:
+        print(f"Niepoprawny format, używam domyślnie {default}.")
+        return default
+
+N_DIMENSIONS = input_with_default("Podaj liczbę zmiennych", DEFAULT_DIMENSIONS)
+EPOCHS = input_with_default("Podaj liczbę epok", DEFAULT_EPOCHS)
+POP_SIZE = input_with_default("Podaj liczbę osobników w populacji", DEFAULT_POP_SIZE)
+
+# Zakresy funkcji celu
 if choice == "cec2014_f5":
     BOUNDS = (-100, 100)
 else:
     BOUNDS = (-500, 500)
-
 
 bounds = FloatVar(
     lb=[BOUNDS[0]] * N_DIMENSIONS,
@@ -75,13 +86,8 @@ problem = {
 }
 
 
-# 4. Parametry algorytmu WOA
-EPOCHS = 100
-POP_SIZE = 80
-N_RUNS = 10  # Do wykresu średniej ± std
-
-
-# 5. Wykonanie wielu uruchomień dla wykresów
+# 4. Wykonanie wielu uruchomień dla wykresów
+N_RUNS = 10  # do wykresu średniej ± std
 all_best = []
 
 for run in range(N_RUNS):
@@ -95,8 +101,10 @@ std = np.std(all_best, axis=0)
 generations = np.arange(1, EPOCHS + 1)
 
 
-# 6. Rysowanie wykresów
+# 5. Rysowanie wykresów
 fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+
+# Wykres najlepszej wartości ostatniego run
 axes[0].plot(generations, all_best[-1], 'b-', linewidth=2, label='Najlepsza z ostatniego run')
 axes[0].set_xlabel('Generacja')
 axes[0].set_ylabel('Wartość funkcji')
@@ -104,6 +112,7 @@ axes[0].set_title('Najlepsza wartość funkcji celu od kolejnej iteracji')
 axes[0].grid(True, alpha=0.3)
 axes[0].legend()
 
+# Wykres średniej ± odchylenie standardowe
 axes[1].plot(generations, avg, 'g-', linewidth=2, label='Średnia')
 axes[1].fill_between(
     generations,
